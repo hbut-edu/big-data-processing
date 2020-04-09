@@ -82,7 +82,11 @@ http://dblab.xmu.edu.cn/blog/1233/
 
 使用该ubuntu镜像启动一个容器
 
-`docker run -it -v /<host-share-path>/build:/<container-share-path>/build ubuntu`
+`sudo docker run -it -v <host-share-path>/build:<container-share-path>/build ubuntu`
+
+e.g.
+
+`sudo docker run -it -v ~/Documents/hadoop/build:/home/hadoop/build ubuntu`
 
 容器启动后，会自动进入容器的控制台
 在容器的控制台安装所需软件
@@ -91,9 +95,9 @@ http://dblab.xmu.edu.cn/blog/1233/
 
 `apt-get upgrade`
 
-仅需要vim和ssh
+需要net-tools、vim和ssh
 
-`apt-get install vim openssh-server`
+`apt-get install net-tools vim openssh-server`
 
 ## 配置ssh服务器
 
@@ -111,15 +115,15 @@ http://dblab.xmu.edu.cn/blog/1233/
 
 配置ssh的无密码访问
 
-`cd ~/.ssh`
-
 `ssh-keygen -t rsa`
+
+`cd ~/.ssh`
 
 `cat id_rsa.pub >> authorized_keys`
 
 ## 安装JDK 8
 
-（注意）hadoop目前仅支持jdk 8
+（注意）hadoop 3.x目前仅支持jdk 7, 8
 
 `apt-get install openjdk-8-jdk`
 
@@ -136,15 +140,19 @@ export PATH=$PATH:$JAVA_HOME/bin
 
 `source ~/.bashrc`
 
+测试jdk正常运作
+
+`java -version`
+
 ## 保存镜像
 
-`docker login`
+`sudo docker login`
 
 查询CONTAINER ID
 
-`docker ps`
+`sudo docker ps`
 
-`docker commit <CONTAINER ID> <IMAGE NAME>`
+`sudo docker commit <CONTAINER ID> <IMAGE NAME>`
 
 ## 安装hadoop
 
@@ -228,12 +236,24 @@ export PATH=$PATH:$JAVA_HOME/bin
 加入
 
 ```
-  <configuration>
+<configuration>
     <property>
         <name>mapreduce.framework.name</name>
         <value>yarn</value>
     </property>
-  </configuration>
+    <property>
+        <name>yarn.app.mapreduce.am.env</name>
+        <value>HADOOP_MAPRED_HOME=${HADOOP_HOME}</value>
+    </property>
+    <property>
+        <name>mapreduce.map.env</name>
+        <value>HADOOP_MAPRED_HOME=${HADOOP_HOME}</value>
+    </property>
+    <property>
+        <name>mapreduce.reduce.env</name>
+        <value>HADOOP_MAPRED_HOME=${HADOOP_HOME}</value>
+    </property>
+</configuration>
 ```
  
 配置yarn-site.xml文件
@@ -243,8 +263,8 @@ export PATH=$PATH:$JAVA_HOME/bin
 加入
 
 ```
- <configuration>
-  <!-- Site specific YARN configuration properties -->
+<configuration>
+<!-- Site specific YARN configuration properties -->
         <property>
             <name>yarn.nodemanager.aux-services</name>
             <value>mapreduce_shuffle</value>
@@ -253,12 +273,18 @@ export PATH=$PATH:$JAVA_HOME/bin
             <name>yarn.resourcemanager.hostname</name>
             <value>master</value>
         </property>
-  </configuration>
+</configuration>
 ```
 
 ## 服务启动权限配置
 
 配置start-dfs.sh与stop-dfs.sh文件
+
+`vi sbin/start-dfs.sh`
+
+和
+
+`vi sbin/stop-dfs.sh`
 
 ```
 HDFS_DATANODE_USER=root
@@ -268,6 +294,12 @@ HDFS_SECONDARYNAMENODE_USER=root
 ```
 
 配置start-yarn.sh与stop-yarn.sh文件
+
+`vi sbin/start-yarn.sh`
+
+和
+
+`vi sbin/stop-yarn.sh`
 
 ```
 YARN_RESOURCEMANAGER_USER=root
@@ -286,27 +318,32 @@ YARN_NODEMANAGER_USER=root
 打开三个宿主控制台，启动一主两从三个容器
 
 master
+打开端口映射：8088 => 8088
 
-`docker run -it -h master --name master <IMAGE NAME>`
+`sudo docker run -p 8088:8088 -it -h master --name master <IMAGE NAME>`
 
 worker01
 
-`docker run -it -h worker01 --name worker01 <IMAGE NAME>`
+`sudo docker run -it -h worker01 --name worker01 <IMAGE NAME>`
 
 worker02
 
-`docker run -it -h worker02 --name worker02 <IMAGE NAME>`
+`sudo docker run -it -h worker02 --name worker02 <IMAGE NAME>`
 
 分别打开三个容器的/etc/hosts，将彼此的ip地址与主机名的映射信息补全（三个容器均需要如此配置）
 
 `vi /etc/hosts`
 
-添加信息
+也可以使用以下命令查询ip
+
+`ifconfig`
+
+添加信息（每次容器启动该文件都需要调整）
 
 ```
-172.18.0.2      master
-172.18.0.3      worker01
-172.18.0.4      worker02
+<master  实际ip>      master
+<worker01实际ip>      worker01
+<worker02实际ip>      worker02
 ```
 
 检查配置是否有效
@@ -321,7 +358,7 @@ ssh worker02
 
 `cd /usr/local/hadoop-3.2.1`
 
-`vi etc/hadoop/worker`
+`vi etc/hadoop/workers`
 
 删除`localhost`，加入
 
@@ -342,13 +379,14 @@ worker02
 
 `./sbin/start-all.sh`
 
-建立一个目录存放配置文件
+在hdfs上建立一个目录存放文件
+假设该目录为：/home/hadoop/input
 
 `./bin/hdfs dfs -mkdir -p /home/hadoop/input`
 
-`./bin/hdfs dfs -put ./etc/hadoop-3.2.1/*.xml /home/hadoop/input`
+`./bin/hdfs dfs -put ./etc/hadoop/*.xml /home/hadoop/input`
 
-查看复制是否正常
+查看分发复制是否正常
 
 `./bin/hdfs dfs -ls /home/hadoop/input`
 
@@ -359,3 +397,11 @@ worker02
 运行结束后，查看输出结果
 
 `./bin/hdfs dfs -cat output/*`
+
+# Q&A
+
+Q：如何让Name Node退出安全模式。
+
+A：关闭容器前，没有执行stop-all.sh命令会导致Name Node进入安全模式。退出安全模式命令如下
+
+`./bin/hadoop dfsadmin -safemode leave`
