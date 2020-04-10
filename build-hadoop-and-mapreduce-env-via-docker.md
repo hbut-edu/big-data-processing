@@ -1,4 +1,4 @@
-# 基于docker搭建hadoop与MapReduce
+# 基于docker技术搭建Hadoop与MapReduce环境
 
 本文扩展自：
 
@@ -68,7 +68,7 @@ http://dblab.xmu.edu.cn/blog/1233/
 
 `sudo docker ps -a`
 
-# 基于docker搭建hadoop与MapReduce
+# 基于docker技术搭建hadoop与mapreduce
 
 ## 整备容器环境
 
@@ -157,6 +157,12 @@ export PATH=$PATH:$JAVA_HOME/bin
 ## 安装hadoop
 
 在宿主控制台上下载hadoop二进制压缩包
+
+本文使用的hadoop版本为`3.2.1`。
+
+其他版本请在下列网站下载。
+
+https://hadoop.apache.org/releases.html
 
 `cd /<host-share-path>/build`
 
@@ -405,3 +411,7 @@ Q：如何让Name Node退出安全模式。
 A：关闭容器前，没有执行stop-all.sh命令会导致Name Node进入安全模式。退出安全模式命令如下
 
 `./bin/hadoop dfsadmin -safemode leave`
+
+Q：如何批量删除已经退出的容器。
+
+A：`sudo docker container prune`
