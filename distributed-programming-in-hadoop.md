@@ -26,9 +26,13 @@ sudo docker exec -it worker01 bash
 
 sudo docker exec -it worker02 bash
 
+退出：
+
 Q: Pool overlaps with other one on this address space
 
 A: sudo docker network rm <network id>
+
+sudo docker stop master worker01 worker02
 
 Q: 删除所有已经退出的容器
 
