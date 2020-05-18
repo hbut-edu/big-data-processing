@@ -415,3 +415,9 @@ A：关闭容器前，没有执行stop-all.sh命令会导致Name Node进入安�
 Q：如何批量删除已经退出的容器。
 
 A：`sudo docker container prune`
+
+Q：启动hadoop服务时出现connect to host <docker node> port 22: Connection refused的错误。
+
+A：ssh服务器没有启动，使用下面的命令启动ssh服务器
+
+`/etc/init.d/ssh start`

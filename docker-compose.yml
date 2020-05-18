@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+
+  master:
+    image: ubuntu/hadoop_3.2.1_cluster_tested
+    ports:
+      - "8088:8088"
+      - "9000:9000"
+    volumes:
+      - /home/ryu/Documents/hadoop/master/share:/root/share
+    hostname: master
+    container_name: master
+    links:
+      - worker01
+      - worker02
+    tty: true
+    networks:
+      hadoop_network:
+        ipv4_address: 172.19.0.3
+    extra_hosts:
+      - "worker01:172.19.0.4"
+      - "worker02:172.19.0.5"
+
+  worker01:
+    image: ubuntu/hadoop_3.2.1_cluster_tested
+    volumes:
+      - /home/ryu/Documents/hadoop/worker01/share:/root/share
+    hostname: worker01
+    container_name: worker01
+    tty: true
+    networks:
+      hadoop_network:
+        ipv4_address: 172.19.0.4
+    extra_hosts:
+      - "master:172.19.0.3"
+      - "worker02:172.19.0.5"
+
+  worker02:
+    image: ubuntu/hadoop_3.2.1_cluster_tested
+    volumes:
+      - /home/ryu/Documents/hadoop/worker02/share:/root/share
+    hostname: worker02
+    container_name: worker02
+    tty: true
+    networks:
+      hadoop_network:
+        ipv4_address: 172.19.0.5
+    extra_hosts:
+      - "master:172.19.0.3"
+      - "worker01:172.19.0.4"
+
+networks:
+  hadoop_network:
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
