@@ -1,31 +1,63 @@
+# 文件格式版本号
+# 通过 https://docs.docker.com/compose/compose-file/ 网站获取对应文件格式版本
 version: "3.8"
 
 services:
 
+  # 配置master容器的参数
   master:
+
+    # 设定使用的镜像
     image: ubuntu/hadoop_3.2.1_cluster_tested
+
+    # 设定端口映射
     ports:
-      - "8088:8088"
-      - "9000:9000"
+      - "8088:8088" # web应用程序状态查看界面
+      - "9000:9000" # HDFS文件系统端口
+      - "50071:50070"
+
+    # 设定挂载的卷共享，通过该设置，可以在host与容器之间共享数据
     volumes:
       - /home/ryu/Documents/hadoop/master/share:/root/share
+
+    # 主机名
     hostname: master
+
+    #容器名
     container_name: master
+
+    # 依赖关系。如此设定后，master会在worker01与worker02启动之后再启动。
+    # 通过定义依赖关系，可以自定义容器的启动顺序。
+    # 无法循环依赖。
     links:
       - worker01
       - worker02
+
+    # 设定让容器持续运行
     tty: true
+
+    # 网络配置
     networks:
+
+      #此为自定义网络的名称，自定义网络的配置在文件的末尾
       hadoop_network:
+
+        # 为master分配静态ip
+        # 目的是为了自动配置/etc/hosts
         ipv4_address: 172.19.0.3
+
+    # 将worker01与worker02的静态ip加入/etc/hosts中。
     extra_hosts:
       - "worker01:172.19.0.4"
       - "worker02:172.19.0.5"
 
+  # 配置worker01容器的参数
   worker01:
     image: ubuntu/hadoop_3.2.1_cluster_tested
     volumes:
       - /home/ryu/Documents/hadoop/worker01/share:/root/share
+    ports:
+      - "50071:50070"
     hostname: worker01
     container_name: worker01
     tty: true
@@ -36,8 +68,11 @@ services:
       - "master:172.19.0.3"
       - "worker02:172.19.0.5"
 
+  # 配置worker02容器的参数
   worker02:
     image: ubuntu/hadoop_3.2.1_cluster_tested
+    ports:
+      - "50072:50070"
     volumes:
       - /home/ryu/Documents/hadoop/worker02/share:/root/share
     hostname: worker02
@@ -50,8 +85,10 @@ services:
       - "master:172.19.0.3"
       - "worker01:172.19.0.4"
 
+# 自定义网络配置
 networks:
   hadoop_network:
     ipam:
       config:
+        # 设定网关与掩码
         - subnet: 172.19.0.0/16
