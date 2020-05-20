@@ -134,7 +134,9 @@ Python是大数据处理领域流行的编程语言，本节将介绍如何使�
 
 # 使用Python编写MapReduce代码
 
-参考目录：BigDataProcessingStreaming
+参考目录：`BigDataProcessingStreaming`
+
+`https://github.com/hbut-edu/big-data-processing/tree/master/BigDataProcessingStreaming`
 
 在基于Hadoop Streaming的MapReduce编程中，输入为标准输入STDIN，输出为标准输出STDOUT。
 
@@ -200,6 +202,9 @@ A：使用`-rm -r`命令。
 ### 输出格式（以网元为单位）
 
 网元1 10
+
 网元2 15
+
 网元3 9
+
 ...
