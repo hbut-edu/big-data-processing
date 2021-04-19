@@ -1,8 +1,4 @@
-# 基于docker技术搭建Hadoop与MapReduce环境
-
-本文扩展自：
-
-http://dblab.xmu.edu.cn/blog/1233/
+# 基于docker技术搭建Hadoop与MapReduce分布式环境
 
 # 安装docker
 
@@ -10,11 +6,11 @@ http://dblab.xmu.edu.cn/blog/1233/
 
 `lsb_release -a`
 
-本文所用环境如下
+本文适用环境如下
 
-`发行版版本：Ubuntu 18.04.4 LTS`
+`发行版版本：Ubuntu 18.04 LTS`
 
-`内核版本号：5.3.0-46-generic`
+`内核版本号：5.3.*-*-generic`
 
 ## 整备安装环境
 
@@ -38,9 +34,11 @@ http://dblab.xmu.edu.cn/blog/1233/
 
 `sudo docker version`
 
-（可选）安装docker-compose
+（可选）安装docker-compose，当前最新版本为1.29.1
 
-`sudo curl -L "https://github.com/docker/compose/releases/download/1.29.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose`
+可以先行访问 https://github.com/docker/compose/releases/ 确认版本号
+
+`sudo curl -L "https://github.com/docker/compose/releases/download/1.29.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose`
 
 `sudo chmod +x /usr/local/bin/docker-compose`
 
@@ -60,15 +58,15 @@ http://dblab.xmu.edu.cn/blog/1233/
 
 `sudo systemctl restart docker`
 
-## 测试docker是否能够抓取镜像和运行
+## 测试docker是否能够正常抓取镜像和运行
 
 `sudo docker run hello-world`
 
-可以看到hello-world的运行记录
+查看hello-world镜像的运行记录
 
 `sudo docker ps -a`
 
-# 基于docker技术搭建hadoop与mapreduce
+# 基于docker技术搭建hadoop与map reduce
 
 ## 整备容器环境
 
@@ -82,20 +80,23 @@ http://dblab.xmu.edu.cn/blog/1233/
 
 使用该ubuntu镜像启动一个容器
 
-`sudo docker run -it -v <host-share-path>/build:<container-share-path>/build ubuntu`
+`将<host-share-path>与<container-share-path>连通`
+
+`sudo docker run -it -v <host-share-path>:<container-share-path> ubuntu`
 
 e.g.
 
-`sudo docker run -it -v ~/Documents/hadoop/build:/home/hadoop/build ubuntu`
+`sudo docker run -it -v ~/hadoop/build:/home/hadoop/build ubuntu`
 
 容器启动后，会自动进入容器的控制台
+
 在容器的控制台安装所需软件
 
 `apt-get update`
 
 `apt-get upgrade`
 
-需要net-tools、vim和ssh
+需要安装net-tools（网络哦管理工具）、vim（命令行文本编辑器）和ssh（远程登录协议）
 
 `apt-get install net-tools vim openssh-server`
 
@@ -105,9 +106,11 @@ e.g.
 
 `vi ~/.bashrc`
 
-在文件的最末尾加上
+在文件的最末尾按`O`进入编辑模式，加上：
 
 `/etc/init.d/ssh start`
+
+按ESC返回命令模式，输入`:wq`保存并退出。
 
 让修改即刻生效
 
@@ -126,6 +129,8 @@ e.g.
 （注意）hadoop 3.x目前仅支持jdk 7, 8
 
 `apt-get install openjdk-8-jdk`
+
+在环境变量中引用jdk，编辑bash命令行配置文件
 
 `vi ~/.bashrc`
 
@@ -146,11 +151,17 @@ export PATH=$PATH:$JAVA_HOME/bin
 
 ## 保存镜像
 
+（可选）登录docker，需要事先在docker网站上注册账号
+
+好处是可以将自己做好的镜像提交到网上
+
 `sudo docker login`
 
 查询CONTAINER ID
 
 `sudo docker ps`
+
+将当前容器保存为镜像
 
 `sudo docker commit <CONTAINER ID> <IMAGE NAME>`
 
@@ -158,19 +169,19 @@ export PATH=$PATH:$JAVA_HOME/bin
 
 在宿主控制台上下载hadoop二进制压缩包
 
-本文使用的hadoop版本为`3.2.1`。
+本文使用的hadoop版本为`3.2.1`。目前最新为`3.3.0`
 
 其他版本请在下列网站下载。
 
 https://hadoop.apache.org/releases.html
 
-`cd /<host-share-path>/build`
+`cd /<host-share-path>`
 
 `wget https://www.apache.org/dyn/closer.cgi/hadoop/common/hadoop-3.2.1/hadoop-3.2.1.tar.gz`
 
 在容器控制台上解压hadoop
 
-`cd /<container-share-path>/build`
+`cd /<container-share-path>`
 
 `tar -zxvf hadoop-3.2.1.tar.gz -C /usr/local`
 
@@ -184,7 +195,7 @@ https://hadoop.apache.org/releases.html
 
 `vi etc/hadoop/hadoop-env.sh`
 
-查找到被注释掉的JAVA_HOME配置位置，更改为：
+查找到被注释掉的JAVA_HOME配置位置，更改为刚才设定的jdk位置
 
 `export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/`
 
@@ -203,6 +214,7 @@ https://hadoop.apache.org/releases.html
         <value>file:/usr/local/hadoop-3.2.1/tmp</value>
         <description>Abase for other temporary directories.</description>
     </property>
+    <!--- 配置文件系统的URI，代码中可以通过该地址访问文件系统，使用 HDFSOperator.HDFS_URI 调用 -->
     <property>
         <name>fs.defaultFS</name>
         <value>hdfs://master:9000</value>
@@ -218,10 +230,12 @@ https://hadoop.apache.org/releases.html
 
 ```
 <configuration>
+    <!--- 配置保存Fsimage位置 -->
     <property>
         <name>dfs.namenode.name.dir</name>
         <value>file:/usr/local/hadoop-3.2.1/namenode_dir</value>
     </property>
+    <!--- 配置保存数据文件的位置 -->
     <property>
         <name>dfs.datanode.data.dir</name>
         <value>file:/usr/local/hadoop-3.2.1/datanode_dir</value>
@@ -235,18 +249,24 @@ https://hadoop.apache.org/releases.html
 
 ## MapReduce配置
 
-配置mapred-site.xml文件
+该配置文件的定义：
+
+https://hadoop.apache.org/docs/r<Hadoop版本号>/hadoop-mapreduce-client/hadoop-mapreduce-client-core/mapred-default.xml
 
 `vi etc/hadoop/mapred-site.xml`
+
+配置mapred-site.xml文件
 
 加入
 
 ```
 <configuration>
+    <!--- mapreduce框架的名字 -->
     <property>
         <name>mapreduce.framework.name</name>
         <value>yarn</value>
     </property>
+    <! -- 设定HADOOP的位置给yarn和mapreduce程序 -->
     <property>
         <name>yarn.app.mapreduce.am.env</name>
         <value>HADOOP_MAPRED_HOME=${HADOOP_HOME}</value>
@@ -271,10 +291,12 @@ https://hadoop.apache.org/releases.html
 ```
 <configuration>
 <!-- Site specific YARN configuration properties -->
+        <!-- 辅助服务，数据混洗 -->
         <property>
             <name>yarn.nodemanager.aux-services</name>
             <value>mapreduce_shuffle</value>
         </property>
+        <! -- 设定资源管理服务器的host名称，这个名称（master）将在下个小节中设定
         <property>
             <name>yarn.resourcemanager.hostname</name>
             <value>master</value>
