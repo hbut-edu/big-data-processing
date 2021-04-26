@@ -38,6 +38,8 @@ https://github.com/docker/compose/releases
 
 docker-compose为单一可执行文件，将其放到`/usr/local/bin`中，给予文件执行权限即可使用。
 
+当前使用的是1.25.5版本。
+
 ```
 sudo curl -L "https://github.com/docker/compose/releases/download/1.25.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 
@@ -114,9 +116,9 @@ JAVA编程环境所用的JDK/JRE版本号必须与Hadoop环境的JDK/JRE版本�
 
 假设开发环境位于host，那么：
 
-代码：host环境下编译生成JAR包，需要通过共享文件夹将JAR包传到master容器内部。
+代码：在host环境下编译生成JAR包，需要通过共享文件夹将JAR包传到master容器内部。
 
-数据：防止在host环境下的数据文件可以直接通过HDFS的API上传至HDFS内部。
+数据：在host环境下的数据文件可以直接通过HDFS的API上传至HDFS内部。
 
 运行：
 
