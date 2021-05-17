@@ -34,11 +34,11 @@
 
 `sudo docker version`
 
-（可选）安装docker-compose，当前最新版本为1.29.1
+（可选）安装docker-compose，当前最新版本为1.29.2
 
 可以先行访问 https://github.com/docker/compose/releases/ 确认版本号
 
-`sudo curl -L "https://github.com/docker/compose/releases/download/1.29.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose`
+`sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose`
 
 `sudo chmod +x /usr/local/bin/docker-compose`
 
@@ -96,7 +96,7 @@ e.g.
 
 `apt-get upgrade`
 
-需要安装net-tools（网络哦管理工具）、vim（命令行文本编辑器）和ssh（远程登录协议）
+需要安装net-tools（网络管理工具）、vim（命令行文本编辑器）和ssh（远程登录协议）
 
 `apt-get install net-tools vim openssh-server`
 
