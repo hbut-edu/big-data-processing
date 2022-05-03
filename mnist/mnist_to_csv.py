@@ -21,7 +21,7 @@ def convert(imgf, labelf, outf, n):
 
 
 # 数据集在 http://yann.lecun.com/exdb/mnist/ 下载
-convert("train-images.idx3-ubyte", "train-labels.idx1-ubyte",
+convert("train-images-idx3-ubyte", "train-labels-idx1-ubyte",
         "mnist_train.csv", 60000)
-convert("t10k-images.idx3-ubyte", "t10k-labels.idx1-ubyte",
+convert("t10k-images-idx3-ubyte", "t10k-labels-idx1-ubyte",
         "mnist_test.csv", 10000)
