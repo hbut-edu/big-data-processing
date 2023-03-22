@@ -1,0 +1,66 @@
+version: '3'
+
+services:
+  namenode:
+    image: ryu-hadoop
+    hostname: namenode
+    container_name: namenode
+    entrypoint: ["sh", "-c", "/usr/sbin/sshd && hadoop-daemon.sh start namenode && hadoop-daemon.sh start secondarynamenode && jps && tail -f /dev/null"]
+    volumes:
+      - ./config:/etc/hadoop
+      - namenode-data:/hadoop/dfs/name
+    networks:
+      - hadoop
+    ports:
+      - "8020:8020"
+      - "9870:9870"
+
+  datanode:
+    image: ryu-hadoop
+    hostname: datanode
+    container_name: datanode
+    depends_on:
+      - namenode
+    entrypoint: ["sh", "-c", "/usr/sbin/sshd && hadoop-daemon.sh start datanode && jps && tail -f /dev/null"]
+    volumes:
+      - ./config:/etc/hadoop
+      - datanode-data:/hadoop/dfs/data
+    networks:
+      - hadoop
+    ports:
+      - "9864:9864"
+
+  resourcemanager:
+    image: ryu-hadoop
+    hostname: resourcemanager
+    container_name: resourcemanager
+    entrypoint: ["sh", "-c", "/usr/sbin/sshd && yarn-daemon.sh start resourcemanager && jps && tail -f /dev/null"]
+    volumes:
+      - ./config:/etc/hadoop
+    networks:
+      - hadoop
+    ports:
+      - "8088:8088"
+      - "8032:8032"
+
+  nodemanager:
+    image: ryu-hadoop
+    hostname: nodemanager
+    container_name: nodemanager
+    depends_on:
+      - resourcemanager
+    entrypoint: ["sh", "-c", "/usr/sbin/sshd && yarn-daemon.sh start nodemanager && jps && tail -f /dev/null"]
+    volumes:
+      - ./config:/etc/hadoop
+    networks:
+      - hadoop
+    ports:
+      - "8042:8042"
+
+networks:
+  hadoop:
+    driver: bridge
+
+volumes:
+  namenode-data:
+  datanode-data:
