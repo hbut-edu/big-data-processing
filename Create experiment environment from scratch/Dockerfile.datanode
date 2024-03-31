@@ -1,0 +1,34 @@
+# 使用Ubuntu 20.04为基础镜像
+FROM ubuntu:20.04
+
+# 定义Hadoop版本为构建参数
+ARG HADOOP_VERSION=3.4.0
+ARG DEBIAN_FRONTEND=noninteractive
+
+COPY sources.list /etc/apt/sources.list
+
+# 安装OpenJDK和必需工具
+RUN apt-get update && apt-get install -y openjdk-8-jdk wget ssh pdsh && rm -rf /var/lib/apt/lists/*
+
+# 设置环境变量
+ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+ENV HADOOP_HOME=/usr/local/hadoop
+ENV PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+
+# 下载并解压Hadoop
+RUN wget https://dlcdn.apache.org/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz -P /tmp && \
+    tar -xzf /tmp/hadoop-${HADOOP_VERSION}.tar.gz -C /usr/local/ && \
+    mv /usr/local/hadoop-${HADOOP_VERSION} $HADOOP_HOME && \
+    rm /tmp/hadoop-${HADOOP_VERSION}.tar.gz
+
+# 配置SSH免密登录
+RUN ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa && \
+    cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys && \
+    echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config
+
+# 添加Hadoop配置文件
+COPY core-site.xml $HADOOP_HOME/etc/hadoop/
+COPY hdfs-site.xml $HADOOP_HOME/etc/hadoop/
+
+# 启动SSH服务和DataNode
+CMD service ssh start && $HADOOP_HOME/sbin/hadoop-daemon.sh start datanode && tail -f /dev/null

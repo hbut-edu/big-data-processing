@@ -1,0 +1,60 @@
+version: '3'
+
+services:
+  namenode:
+    image: hadoop-namenode:latest
+    container_name: namenode
+    hostname: namenode
+    ports:
+      - "9000:9000"
+      - "9870:9870"
+    volumes:
+      - namenode-data:/hadoop/dfs/name
+      - ./upload:/upload
+
+  secondarynamenode:
+    image: hadoop-secondarynamenode:latest
+    container_name: secondarynamenode
+    hostname: secondarynamenode
+    volumes:
+      - secondarynamenode-data:/hadoop/dfs/data
+    depends_on:
+      - namenode
+
+  datanode1:
+    image: hadoop-datanode:latest
+    container_name: datanode1
+    hostname: datanode1
+    volumes:
+      - datanode1-data:/hadoop/dfs/data
+    depends_on:
+      - namenode
+
+  datanode2:
+    image: hadoop-datanode:latest
+    container_name: datanode2
+    hostname: datanode2
+    volumes:
+      - datanode2-data:/hadoop/dfs/data
+    depends_on:
+      - namenode
+
+  datanode3:
+    image: hadoop-datanode:latest
+    container_name: datanode3
+    hostname: datanode3
+    volumes:
+      - datanode3-data:/hadoop/dfs/data
+    depends_on:
+      - namenode
+
+volumes:
+  namenode-data:
+  secondarynamenode-data:
+  datanode1-data:
+  datanode2-data:
+  datanode3-data:
+
+networks:
+  default:
+    driver: bridge
